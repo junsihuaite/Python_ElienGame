@@ -1,4 +1,5 @@
 import sys
+from random import randint
 from time import sleep
 
 import pygame
@@ -10,6 +11,7 @@ from button import Button
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
+from star import Star
 
 
 class AlienInvasion:
@@ -35,6 +37,10 @@ class AlienInvasion:
         self.aliens = pygame.sprite.Group()
 
         self._create_fleet()
+
+        # 创建星星群
+        self.stars = pygame.sprite.Group()
+        self._create_starry()
 
         # 创建Play按钮.
         self.play_button = Button(self, "Play")
@@ -82,7 +88,7 @@ class AlienInvasion:
             # 清空余下的外星人和子弹.
             self.aliens.empty()
             self.bullets.empty()
-            
+
             # 创建一群新的外星人并且让飞船居中.
             self._create_fleet()
             self.ship.center_ship()
@@ -133,7 +139,7 @@ class AlienInvasion:
         # 删除消失的子弹.
         for bullet in self.bullets.copy():
             if bullet.rect.bottom <= 0:
-                 self.bullets.remove(bullet)
+                self.bullets.remove(bullet)
 
         self._check_bullet_alien_collisions()
 
@@ -141,7 +147,7 @@ class AlienInvasion:
         """应对子弹外星人碰撞."""
         # 移除任何碰撞的子弹和外星人.
         collisions = pygame.sprite.groupcollide(
-                self.bullets, self.aliens, True, True)
+            self.bullets, self.aliens, True, True)
 
         if collisions:
             for aliens in collisions.values():
@@ -189,15 +195,15 @@ class AlienInvasion:
             #   将ships_left-1，并且更新记分牌.
             self.stats.ships_left -= 1
             self.sb.prep_ships()
-            
+
             # 清空剩余的外星人和子弹.
             self.aliens.empty()
             self.bullets.empty()
-            
+
             # 创建新外星人群并将飞船放到屏幕底部的中央.
             self._create_fleet()
             self.ship.center_ship()
-            
+
             # 暂停.
             sleep(0.5)
         else:
@@ -212,13 +218,13 @@ class AlienInvasion:
         alien_width, alien_height = alien.rect.size
         available_space_x = self.settings.screen_width - (2 * alien_width)
         number_aliens_x = available_space_x // (2 * alien_width)
-        
+
         # 计算屏幕可容纳多少行外星人
         ship_height = self.ship.rect.height
         available_space_y = (self.settings.screen_height -
-                                (3 * alien_height) - ship_height)
+                             (3 * alien_height) - ship_height)
         number_rows = available_space_y // (2 * alien_height)
-        
+
         # 创建外星人群.
         for row_number in range(number_rows):
             for alien_number in range(number_aliens_x):
@@ -239,7 +245,7 @@ class AlienInvasion:
             if alien.check_edges():
                 self._change_fleet_direction()
                 break
-            
+
     def _change_fleet_direction(self):
         """将整群外星人向下移动，并改变它们的方向."""
         for alien in self.aliens.sprites():
@@ -253,6 +259,7 @@ class AlienInvasion:
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
         self.aliens.draw(self.screen)
+        self.stars.draw(self.screen)
 
         # 绘制分数信息.
         self.sb.show_score()
@@ -262,6 +269,34 @@ class AlienInvasion:
             self.play_button.draw_button()
 
         pygame.display.flip()
+
+    def _create_starry(self):
+        """ 创建星群 """
+        # 创建一个星星并计算一行可容纳多少个星星
+        star = Star(self)
+        star_width, star_height = star.rect.size
+        # 屏幕x方向左右各预留一个星星宽度
+        self.availiable_space_x = self.screen.get_rect().width - (2 * star_width)
+        # 星星的间距为星星宽度的3倍
+        number_stars_x = self.availiable_space_x // (4 * star_width) + 1
+
+        # 计算屏幕可容纳多少行星星
+        # 屏幕y方向上下各预留一个星星宽度
+        self.availiable_space_y = self.screen.get_rect().height - (2 * star_height)
+        # 星星的间距为星星高度的3倍
+        number_rows = self.availiable_space_y // (4 * star_height) + 1
+
+        # 创建星群
+        for row_number in range(number_rows):
+            for star_number in range(number_stars_x):
+                self._create_star(star_number, row_number)
+
+    def _create_star(self, star_number, row_number):
+        # 创建一个星星并将其加入到当前行
+        star = Star(self)
+        star.rect.x = randint(0, self.availiable_space_x)
+        star.rect.y = randint(0, self.availiable_space_y)
+        self.stars.add(star)
 
 
 if __name__ == '__main__':
